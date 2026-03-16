@@ -13,7 +13,11 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const __dirname = path.resolve();
 
-if (process.env.NODE_ENV === "!production") {
+app.use(express.json());
+app.use(rateLimiter);
+
+// Allow frontend during development
+if (process.env.NODE_ENV !== "production") {
   app.use(
     cors({
       origin: "http://localhost:5173",
@@ -21,17 +25,17 @@ if (process.env.NODE_ENV === "!production") {
   );
 }
 
-app.use(express.json());
-app.use(rateLimiter);
-
 app.use("/api/notes", notesRouters);
 
-app.use(express.static(path.join(__dirname, "../frontend/notesProject/dist")));
-
+// Serve frontend in production
 if (process.env.NODE_ENV === "production") {
+  app.use(
+    express.static(path.join(__dirname, "../frontend/notesProject/dist")),
+  );
+
   app.get("*", (req, res) => {
     res.sendFile(
-      path.join(__dirname, "../frontend", "notesProject", "dist", "index.html"),
+      path.join(__dirname, "../frontend/notesProject/dist/index.html"),
     );
   });
 }
